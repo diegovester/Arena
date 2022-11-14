@@ -2,7 +2,7 @@
 *
 * This code implements a sorted linked list using an array as the underlying data structure.
 * The underlying implementation is to be hidden from the end user.  They should interact
-* with the linked list using the insertNode(int value) and removeNode(int value) functions.
+* with the linked list using the insertNode(int size) and removeNode(int size) functions.
 * The elements in the array are not sorted from element 0 to the end of the array and should
 * not be used in that manner.  The internal previous and next elements of the nodes are used
 * to traverse the linked list in order.
@@ -10,6 +10,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "mavalloc.h"
 
 /* The maximum entries in our linked list / array */
@@ -28,6 +29,9 @@ static int initialized = 0;
 */
 static int lastUsed = -1;
 
+static enum ALGORITHM gAlgorithm;
+static void * gArena;
+
 
 /**
 *
@@ -38,18 +42,18 @@ static int lastUsed = -1;
 * This structure represents the node in our linked list implementation.
 * Since this linked list is implemented in an array the previous and next
 * members, which would be pointers in a dynamically allocated linked list,
-* are integers in this implementation.  Their values correspond to the array
+* are integers in this implementation.  Their sizes correspond to the array
 * index where the previous and next nodes reside.
 *
-* The value in_use is to let us track which array entries are currently used.
-* If you are re-using this code in a heap or arena assignment this value does
+* The size in_use is to let us track which array entries are currently used.
+* If you are re-using this code in a heap or arena assignment this size does
 * NOT represent whether your heap block is free or in-use.  You will need to add
 * a new member to this struct to track that.
 *
-* The value element is an integer to demonstrate the functionality of a sorted list.
+* The size element is an integer to demonstrate the functionality of a sorted list.
 * If you are reusing this code you will need to change that datatype to be the
 * actual data type in your implementation, e.g you're creating a linked list of strings
-* then you would change the dataype of value from an int to a char*.
+* then you would change the dataype of size from an int to a char*.
 *
 */
 
@@ -62,14 +66,14 @@ struct Node
 {
 	/** If this array entry is being used as a node. 1 for in-use. 0 for empty */
 	int  in_use;
-	int size;
+	int  size;
 	void * arena;
 	enum TYPE type;
 };
 
 /**
 * This array is the linked list we are implementing.  The linked list represented by this array
-* is a sorted linked list using the "value" member to determine the sorting.  This array is
+* is a sorted linked list using the "size" member to determine the sorting.  This array is
 * not sorted in the same order as the list and, after multiple insertions and removals, may not
 * even be close to the same order.  This is by design.  Rather than sort each element in the array
 * every time a new node is added instead the next and previous links are adjusted to link
@@ -147,7 +151,7 @@ int findFreeNodeInternal()
  *
  * \return 0
  */
-int insertNodeInternal(int previous, int value)
+int insertNodeInternal(int previous, int size)
 {
 	int i = 0;
 
@@ -179,7 +183,7 @@ int insertNodeInternal(int previous, int value)
 	*/
 	if (lastUsed == -1)
 	{
-		LinkedList[i].value = value;
+		LinkedList[i].size = size;
 		LinkedList[i].in_use = 1;
 		lastUsed = i;
 	}
@@ -187,12 +191,12 @@ int insertNodeInternal(int previous, int value)
 	{
 		for (i = 10; i >= previous; i--)
 		{
-			LinkedList[i + 1].value = LinkedList[i].value;
+			LinkedList[i + 1].size = LinkedList[i].size;
 			LinkedList[i + 1].in_use = LinkedList[i].in_use;
 		}
 	
 		LinkedList[previous].in_use = 1;
-		LinkedList[previous].value = value;
+		LinkedList[previous].size = size;
 
 		lastUsed++;
 	}
@@ -256,14 +260,14 @@ int removeNodeInternal(int node)
 
 
 	/**
-	 * If we have a previous node then hook up the previous nodes next value
-	 * to point to our next value. That will cause our node to be snipped out
+	 * If we have a previous node then hook up the previous nodes next size
+	 * to point to our next size. That will cause our node to be snipped out
 	 * of the linked list.
 	 */
 	
 	for (i = node; i < lastUsed; i++)
 	{
-		LinkedList[i].value = LinkedList[i+1].value;
+		LinkedList[i].size = LinkedList[i+1].size;
 
 		/* This line could be removed as it's not needed */
 		LinkedList[i].in_use = LinkedList[i + 1].in_use;
@@ -272,10 +276,10 @@ int removeNodeInternal(int node)
 	
 
 	/**
-	 * Return our next and previous to default values so this node is ready
+	 * Return our next and previous to default sizes so this node is ready
 	 * be reused
 	 */
-	LinkedList[lastUsed].value = -1;
+	LinkedList[lastUsed].size = -1;
 	LinkedList[lastUsed].in_use = 0;
 
 	lastUsed = lastUsed - 1;
@@ -289,19 +293,19 @@ int removeNodeInternal(int node)
  *
  * \fn removeNode(int node)
  *
- * \brief Remove a node from the linked list that contains the given value
+ * \brief Remove a node from the linked list that contains the given size
  *
  * This function will remove the node that is specified by the parameter
  * from the linked list.  This does not remove any data.  Only the next,
  * previous, and in_use flags are updated.
  *
- * \param value The value of the node that will be
+ * \param size The size of the node that will be
  *              removed from the linked list
  *
  * \return 0 on success
  * \return -1 on failure
  */
-int removeNode(int value)
+int removeNode(int size)
 {
 	/**
 	  * We start searching for the node to remove at the root of the linked list
@@ -310,7 +314,7 @@ int removeNode(int value)
 
 	/**
 	 * Iterate over the linked list and find the node
-	 * containing the value we are looking to remove
+	 * containing the size we are looking to remove
 	 */
 	while (index != -1)
 	{
@@ -318,7 +322,7 @@ int removeNode(int value)
 		 * Once we've found the node to delete then
 		 * remove it.
 		 */
-		if (LinkedList[index].value == value)
+		if (LinkedList[index].size == size)
 		{
 			return removeNodeInternal(index);
 		}
@@ -330,25 +334,25 @@ int removeNode(int value)
 
 /**
  *
- * \fn insertNode(int value)
+ * \fn insertNode(int size)
  *
- * \brief Insert a node into the linked list that contains the given value
+ * \brief Insert a node into the linked list that contains the given size
  *
- * This function will insert a node with a value that is specified by the parameter
+ * This function will insert a node with a size that is specified by the parameter
  * into the linked list.
  *
- * \param value The value of the node that will be
+ * \param size The size of the node that will be
  *              inserted into the linked list
  *
  * \return 0 on success
  * \return -1 on failure
  */
-int insertNode(int value)
+int insertNode(int size)
 {
 	/*  Hold the index of the node we will insert behind */
 	int previous = -1;
 
-	/* Return value 0 for success. -1 for failure. */
+	/* Return size 0 for success. -1 for failure. */
 	int ret = -1;
 
 	/* Loop variable */
@@ -356,12 +360,12 @@ int insertNode(int value)
 
 	/**
 	 * Since this list is sorted, iterate over the linked list and find which node we  would
-	 * fit behind with our value.  Once we have found a spot then the while loop will exit
+	 * fit behind with our size.  Once we have found a spot then the while loop will exit
 	 * and previous will have the index of the node we will insert behind.
 	 */
 	for (i = ROOTNODE; i < MAX_LINKED_LIST_SIZE; i++)
 	{
-		if ((LinkedList[i].in_use && LinkedList[i].value > value) ||
+		if ((LinkedList[i].in_use && LinkedList[i].size > size) ||
 			(LinkedList[i].in_use == 0))
 		{
 			previous = i;
@@ -372,7 +376,7 @@ int insertNode(int value)
 	/** If we found a free node and we haven't run off the end of the list */
 	if (previous >= -1)
 	{
-		ret = insertNodeInternal(previous, value);
+		ret = insertNodeInternal(previous, size);
 	}
 	else if (previous >= MAX_LINKED_LIST_SIZE || previous < 0)
 	{
@@ -388,7 +392,7 @@ int insertNode(int value)
  *
  * \brief Print the linked list
  *
- * This function iterates over the list and prints the values in list order.
+ * This function iterates over the list and prints the sizes in list order.
  * If you need a function to iterate over the linked list in order, this is
  * how you would do that.
  *
@@ -407,53 +411,144 @@ void printList()
 	{
 		if (LinkedList[i].in_use == 0)
 		{
-			/** This array is not sparse so the first entry which has a 0 value for
+			/** This array is not sparse so the first entry which has a 0 size for
 			 *  in-use means we've reached the end so no need to continue the loop
 			 */
 			break;
 		}
-		printf("LinkedList[%d]: %d\n", i, LinkedList[i].value);
+		printf("LinkedList[%d]: %d\n", i, LinkedList[i].size);
 	}
 }
 
-int main()
-{
 
-	printf("Inserting 85\n");
-	insertNode(85);
-	printf("Inserting 87\n");
-	insertNode(87);
-	printf("Inserting 500\n");
-	insertNode(500);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	printf("\n\nInserting 100\n");
-	insertNode(100);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	printf("\n\nInserting 86\n\n");
-	insertNode(86);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	printf("\n\nRemoving 87\n\n");
-	removeNode(87);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	printf("\n\nRemoving 85\n\n");
-	removeNode(85);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	printf("\n\nRemoving the tail node with value 500\n\n");
-	removeNode(500);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	printf("\n\nRemoving the head node with value 86\n\n");
-	removeNode(86);
-	printf("\n\nPrint the sorted Linked List\n\n");
-	printList();
-	return 0;
+int mavalloc_init( size_t size, enum ALGORITHM algorithm )
+{
+  // initialize the linked list
+  int i = 0;
+  for( i = 0; i < MAX_LINKED_LIST_SIZE; i++)
+  {
+    LinkedList[i].size = 0;
+    LinkedList[i].in_use = 0;
+    LinkedList[i].arena = 0;
+    LinkedList[i].type = H;
+  }
+  // allocate the pool
+  gArena = malloc( ALIGN4( size ) );
+  printf("%p\n", gArena);
+
+  // save the algorithm type
+  gAlgorithm = algorithm;
+
+  // set the first entry to point to the area
+  LinkedList[0].in_use = 1;
+  LinkedList[0].size = ALIGN4( size );
+  LinkedList[0].type = H;
+  LinkedList[0].arena = gArena;
+  return 0;
 }
 
+void mavalloc_destroy( )
+{
+  int i = 0;
+  for( i = 0; i < MAX_LINKED_LIST_SIZE; i++)
+  {
+    LinkedList[i].size = 0;
+    LinkedList[i].in_use = 0;
+    LinkedList[i].arena = 0;
+    LinkedList[i].type = H;
+  }
 
+  free( gArena );
+  return;
+}
 
+void * mavalloc_alloc( size_t size )
+{
+  // allocate size
+  void * ptr = NULL;
+  if( gAlgorithm == FIRST_FIT )
+  {
+    // start at the beginning of the list
+    int i = 0;
+    // if the node type is hole and in_use and size < node size
+    for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        int leftover_size = LinkedList[i].size - size;
 
+        // Calculate the new arena pointer
+        //unsigned char * arena = (unsigned char *)LinkedList[i].arena + (unsigned char *)size;
+      //    if there is leftover size then insert a new node as
+      //      a hole that holds that leftover space
+      //      insertNode( leftover_size, arena );
+      //
+      //    then return that node arena pointer
+        LinkedList[i].type = P;
+        return LinkedList[i].arena;
+      }
+    }
+  }
+  else if( gAlgorithm == NEXT_FIT )
+  {
+    // resume from the point of the list that the last search ended on
+
+  }
+  else if( gAlgorithm == BEST_FIT )
+  {
+    
+  }
+  else if( gAlgorithm == WORST_FIT )
+  {
+    
+  }
+  
+
+  // only return NULL on failure
+  return NULL;
+}
+
+void mavalloc_free( void * ptr )
+{
+  // search for the node containing the value given by ptr
+  // set that node to be a type H
+  int i;
+  for( i = 0; i < MAX_LINKED_LIST_SIZE; i ++)
+  {
+    if( ptr == LinkedList[i].arena )
+    {
+      LinkedList[i].type = H;
+      return;
+    }
+  }
+  // check if adjacent nodes are free
+  // if they are, then combine them
+  for( i = 0; i < MAX_LINKED_LIST_SIZE-1; i ++)
+  {
+    if( LinkedList[i].type == H && LinkedList[i+1].type == H )
+    {
+      // combine the sizes into LinkedList[i]
+      // remove LinkedList[i+1]
+
+    }
+      
+  }
+  
+  return;
+}
+
+int mavalloc_size( )
+{
+  
+  int number_of_nodes = 0;
+  //count number of nodes?
+  int i = 0;
+  for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+  {
+    if( LinkedList[i].in_use )
+    {
+      number_of_nodes ++;
+    }
+  }
+  return number_of_nodes;
+}
