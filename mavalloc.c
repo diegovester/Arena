@@ -10,9 +10,10 @@
 */
 
 #include <stdio.h>
+#include "mavalloc.h"
 
 /* The maximum entries in our linked list / array */
-#define MAX_LINKED_LIST_SIZE 65535
+#define MAX_LINKED_LIST_SIZE 10000
 
 /* *** INTERNAL USE ONLY *** In an in-line implementation the root node
  * is always 0
@@ -52,14 +53,18 @@ static int lastUsed = -1;
 *
 */
 
+enum TYPE {
+	P = 0,
+	H
+};
+
 struct Node
 {
 	/** If this array entry is being used as a node. 1 for in-use. 0 for empty */
 	int  in_use;
-
-	/** The value that this linked list node contains */
-	int  value;
-
+	int size;
+	void * arena;
+	enum TYPE type;
 };
 
 /**
