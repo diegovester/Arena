@@ -420,9 +420,7 @@ void printList()
 	}
 }
 
-// initialize global variable for NEXT_FIT
-// will remember where the last search ended off on
-int previously_allocated_hole = 0;
+
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
   // initialize the linked list
@@ -464,41 +462,15 @@ void mavalloc_destroy( )
   return;
 }
 
+// initialize global variable for NEXT_FIT
+// will remember where the last search ended off on
+int previously_allocated_hole = 0;
 void * mavalloc_alloc( size_t size )
 {
   // allocate size
   void * ptr = NULL;
+  
   if( gAlgorithm == FIRST_FIT )
-  {
-    // Allocate the first hole that is big enough
-    // start at the beginning of the list
-    //previously_allocated_hole
-    // if the node type is hole and in_use and size < node size
-    for( int i = previously_allocated_hole; i < MAX_LINKED_LIST_SIZE; i++ )
-    {
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
-      {
-        int leftover_size = LinkedList[i].size - size;
-
-        // Calculate the new arena pointer
-        //unsigned char * arena = (unsigned char *)LinkedList[i].arena + (unsigned char *)size;
-      //    if there is leftover size then insert a new node as
-      //      a hole that holds that leftover space
-      //      insertNode( leftover_size, arena );
-        if(leftover_size > 0)
-        {
-          previously_allocated_hole = i;
-          insertNode( size );
-          //    then return that node arena pointer
-          LinkedList[i].type = P;
-          return LinkedList[i].arena;
-        }
-      //
-      
-      }
-    }
-  }
-  else if( gAlgorithm == NEXT_FIT )
   {
     // Allocate the first hole that is big enough
     // the first search starts at the beginning of the list
@@ -528,11 +500,41 @@ void * mavalloc_alloc( size_t size )
       
       }
     }
-
-    // start search from last allocated hole
-    // resume from the point of the list that the last search ended on
-
   }
+  // start search from last allocated hole
+    // resume from the point of the list that the last search ended on
+  else if( gAlgorithm == NEXT_FIT )
+  {
+    // Allocate the first hole that is big enough
+    // start at the beginning of the list
+    //previously_allocated_hole
+      // initialized globally above mavalloc_alloc()
+    // if the node type is hole and in_use and size < node size
+    for( int i = previously_allocated_hole; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        int leftover_size = LinkedList[i].size - size;
+
+        // Calculate the new arena pointer
+        //unsigned char * arena = (unsigned char *)LinkedList[i].arena + (unsigned char *)size;
+      //    if there is leftover size then insert a new node as
+      //      a hole that holds that leftover space
+      //      insertNode( leftover_size, arena );
+        if(leftover_size > 0)
+        {
+          previously_allocated_hole = i;
+          insertNode( size );
+          //    then return that node arena pointer
+          LinkedList[i].type = P;
+          return LinkedList[i].arena;
+        }
+      //
+      
+      }
+    }
+  }
+    
   else if( gAlgorithm == BEST_FIT )
   {
     // allocate the smallest hole that is big enough
