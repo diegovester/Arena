@@ -420,8 +420,54 @@ void printList()
 	}
 }
 
+void addList()
+{
+	/** Start at the root of the linked list */
+	int i = 0;
+  int sum = 0;
+
+	/** Iterate over the linked list in node order and print the nodes. */
+
+	for (i = ROOTNODE; i < MAX_LINKED_LIST_SIZE; i++)
+	{
+		if (LinkedList[i].in_use == 0)
+		{
+			/** This array is not sparse so the first entry which has a 0 size for
+			 *  in-use means we've reached the end so no need to continue the loop
+			 */
+			break;
+		}
+    sum += LinkedList[i].size;
+		printf("LinkedList[%d]: %d\n", i, LinkedList[i].size);
+	}
+  printf("Total size = %d\n", sum);
+}
 
 
+int spitSum()
+{
+  /** Start at the root of the linked list */
+	int i = 0;
+  int sum = 0;
+
+	/** Iterate over the linked list in node order and print the nodes. */
+
+	for (i = ROOTNODE; i < MAX_LINKED_LIST_SIZE; i++)
+	{
+		if (LinkedList[i].in_use == 0)
+		{
+			/** This array is not sparse so the first entry which has a 0 size for
+			 *  in-use means we've reached the end so no need to continue the loop
+			 */
+			break;
+		}
+    sum += LinkedList[i].size;
+		//printf("LinkedList[%d]: %d\n", i, LinkedList[i].size);
+	}
+  return sum;
+}
+
+int global_size = 0;
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
   printf("\n----mavalloc_init----\n");
@@ -445,6 +491,7 @@ int mavalloc_init( size_t size, enum ALGORITHM algorithm )
   // set the first entry to point to the area
   LinkedList[0].in_use = 1;
   LinkedList[0].size = ALIGN4( size );
+  global_size = ALIGN4(size);
   LinkedList[0].type = H;
   LinkedList[0].arena = gArena;
 
@@ -502,6 +549,7 @@ void * mavalloc_alloc( size_t size )
       //      insertNode( leftover_size, arena );
         if(leftover_size > 0)
         {
+          
           insertNode( size );
           //    then return that node arena pointer
           LinkedList[i].type = P;
@@ -567,21 +615,27 @@ void * mavalloc_alloc( size_t size )
     // tracker of previously smallest hole
     // initialize with the first linked list node size as a base line for worst case scenario
     int previously_smallest_leftover_size = LinkedList[0].size;
+    printf("\npreviously_smallest_leftover_size = %d\n", previously_smallest_leftover_size);
     // if the node type is hole and in_use and size < node size
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
+      
       //printf("\nif( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )");
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
       {
+        
         //calculate if the hole is big enough
         leftover_size = LinkedList[i].size - size;
+        printf("leftover_size = %d\n", leftover_size);
         // compare the size of the hole to the previous hole
         // if the leftover_size is smaller than the previously smallest leftover_size
           // then no longer consider the previous hole
         
-        if(leftover_size < previously_smallest_leftover_size)
+        if(leftover_size <= previously_smallest_leftover_size)
         {
+          
           smallest_hole = i;
+          printf("smallest_hole = %d\n", smallest_hole);
           previously_smallest_leftover_size = leftover_size;
           
         }
@@ -594,7 +648,7 @@ void * mavalloc_alloc( size_t size )
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
       //printf("\nif( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )");
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
       {
         // Calculate the new arena pointer
         void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
@@ -606,10 +660,20 @@ void * mavalloc_alloc( size_t size )
           //    then return that node arena pointer
           LinkedList[i].type = P;
           LinkedList[i].arena = arena;
-
-          LinkedList[i+1].in_use = 1;
-          LinkedList[i+1].size = leftover_size;
-          LinkedList[i+1].type = H;
+          int ArenaFill = spitSum();
+          if( ArenaFill != global_size)
+          {
+            LinkedList[i+1].in_use = 1;
+            LinkedList[i+1].size = leftover_size;
+            LinkedList[i+1].type = H;
+            
+          }
+          else
+          {
+            removeNode(0);
+          }
+          
+          
           return LinkedList[i].arena;
         }
       }
@@ -687,7 +751,7 @@ void mavalloc_free( void * ptr )
   {
     if( ptr == LinkedList[i].arena )
     {
-      printf("\nLinkedList[%d].type = H", i);
+      //printf("\nLinkedList[%d].type = H", i);
       LinkedList[i].type = H;
       //return;
     }
