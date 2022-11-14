@@ -470,7 +470,7 @@ int spitSum()
 int global_size = 0;
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
-  printf("\n----mavalloc_init----\n");
+  //printf("\n----mavalloc_init----\n");
   // initialize the linked list
   int i = 0;
   for( i = 0; i < MAX_LINKED_LIST_SIZE; i++)
@@ -482,8 +482,8 @@ int mavalloc_init( size_t size, enum ALGORITHM algorithm )
   }
   // allocate the pool
   gArena = malloc( ALIGN4( size ) );
-  printf("\ngArena = %p", gArena);
-  printf("%p\n", gArena);
+  //printf("\ngArena = %p", gArena);
+  //printf("%p\n", gArena);
 
   // save the algorithm type
   gAlgorithm = algorithm;
@@ -529,7 +529,7 @@ void * mavalloc_alloc( size_t size )
   
   if( gAlgorithm == FIRST_FIT )
   {
-    printf("\nFIRST_FIT\n");
+    //printf("\nFIRST_FIT\n");
     // Allocate the first hole that is big enough
     // the first search starts at the beginning of the list
     // Allocate the first hole that is big enough
@@ -581,7 +581,7 @@ void * mavalloc_alloc( size_t size )
     // resume from the point of the list that the last search ended on
   else if( gAlgorithm == NEXT_FIT )
   {
-    printf("\nNEXT_FIT\n");
+    //printf("\nNEXT_FIT\n");
     // Allocate the first hole that is big enough
     // start at the beginning of the list
     //previously_allocated_hole
@@ -629,7 +629,7 @@ void * mavalloc_alloc( size_t size )
     
   else if( gAlgorithm == BEST_FIT )
   {
-    printf("\nBEST_FIT\n");
+    //printf("\nBEST_FIT\n");
     // allocate the smallest hole that is big enough
     // start at the beginning of th list
     int i = 0;
@@ -637,8 +637,8 @@ void * mavalloc_alloc( size_t size )
     int smallest_hole = 0;
     // tracker of previously smallest hole
     // initialize with the first linked list node size as a base line for worst case scenario
-    int previously_smallest_leftover_size = LinkedList[0].size;
-    printf("\npreviously_smallest_leftover_size = %d\n", previously_smallest_leftover_size);
+    int previously_smallest_leftover_size = MAX_LINKED_LIST_SIZE;
+    //printf("\npreviously_smallest_leftover_size = %d\n", previously_smallest_leftover_size);
     // if the node type is hole and in_use and size < node size
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
@@ -649,7 +649,7 @@ void * mavalloc_alloc( size_t size )
         
         //calculate if the hole is big enough
         leftover_size = LinkedList[i].size - size;
-        printf("leftover_size = %d\n", leftover_size);
+        //printf("leftover_size = %d\n", leftover_size);
         // compare the size of the hole to the previous hole
         // if the leftover_size is smaller than the previously smallest leftover_size
           // then no longer consider the previous hole
@@ -658,7 +658,7 @@ void * mavalloc_alloc( size_t size )
         {
           
           smallest_hole = i;
-          printf("smallest_hole = %d\n", smallest_hole);
+          //printf("smallest_hole = %d\n", smallest_hole);
           previously_smallest_leftover_size = leftover_size;
           
         }
@@ -683,6 +683,8 @@ void * mavalloc_alloc( size_t size )
           //    then return that node arena pointer
           LinkedList[i].type = P;
           LinkedList[i].arena = arena;
+
+          
           int ArenaFill = spitSum();
           if( ArenaFill != global_size)
           {
@@ -695,6 +697,7 @@ void * mavalloc_alloc( size_t size )
           {
             removeNode(0);
           }
+          
           
           
           return LinkedList[i].arena;
@@ -729,10 +732,16 @@ void * mavalloc_alloc( size_t size )
         // compare the size of the hole to the previous hole
         // if the leftover_size is larger than the previously largest leftover_size
           // then no longer consider the previous hole
+        //printList();
+        //printf("\npreviously_largest_leftover_size = %d", previously_largest_leftover_size);
+        //printf("\nleftover_size = %d", leftover_size);
+        
         if(leftover_size > previously_largest_leftover_size)
         {
           largest_hole = i;
           previously_largest_leftover_size = leftover_size;
+          //printf("\npreviously_largest_leftover_size = %d", previously_largest_leftover_size);
+          
         }
         // find the largest hole in the list
         // then run the list again to enter the hole
