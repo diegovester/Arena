@@ -420,7 +420,9 @@ void printList()
 	}
 }
 
-
+// initialize global variable for NEXT_FIT
+// will remember where the last search ended off on
+int previously_allocated_hole = 0;
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
   // initialize the linked list
@@ -468,6 +470,39 @@ void * mavalloc_alloc( size_t size )
   void * ptr = NULL;
   if( gAlgorithm == FIRST_FIT )
   {
+    // Allocate the first hole that is big enough
+    // start at the beginning of the list
+    //previously_allocated_hole
+    // if the node type is hole and in_use and size < node size
+    for( int i = previously_allocated_hole; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        int leftover_size = LinkedList[i].size - size;
+
+        // Calculate the new arena pointer
+        //unsigned char * arena = (unsigned char *)LinkedList[i].arena + (unsigned char *)size;
+      //    if there is leftover size then insert a new node as
+      //      a hole that holds that leftover space
+      //      insertNode( leftover_size, arena );
+        if(leftover_size > 0)
+        {
+          previously_allocated_hole = i;
+          insertNode( size );
+          //    then return that node arena pointer
+          LinkedList[i].type = P;
+          return LinkedList[i].arena;
+        }
+      //
+      
+      }
+    }
+  }
+  else if( gAlgorithm == NEXT_FIT )
+  {
+    // Allocate the first hole that is big enough
+    // the first search starts at the beginning of the list
+    // Allocate the first hole that is big enough
     // start at the beginning of the list
     int i = 0;
     // if the node type is hole and in_use and size < node size
@@ -482,25 +517,124 @@ void * mavalloc_alloc( size_t size )
       //    if there is leftover size then insert a new node as
       //      a hole that holds that leftover space
       //      insertNode( leftover_size, arena );
+        if(leftover_size > 0)
+        {
+          insertNode( size );
+          //    then return that node arena pointer
+          LinkedList[i].type = P;
+          return LinkedList[i].arena;
+        }
       //
-      //    then return that node arena pointer
-        LinkedList[i].type = P;
-        return LinkedList[i].arena;
+      
       }
     }
-  }
-  else if( gAlgorithm == NEXT_FIT )
-  {
+
+    // start search from last allocated hole
     // resume from the point of the list that the last search ended on
 
   }
   else if( gAlgorithm == BEST_FIT )
   {
-    
+    // allocate the smallest hole that is big enough
+    // start at the beginning of th list
+    int i = 0;
+
+    // marker to find the smallest hole
+    int smallest_hole = 0;
+
+    // tracker of previously smallest hole
+    int previously_smallest_leftover_size = MAX_LINKED_LIST_SIZE;
+
+    // if the node type is hole and in_use and size < node size
+    for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        //calculate if the hole is big enough
+        int leftover_size = LinkedList[i].size - size;
+        // compare the size of the hole to the previous hole
+        // if the leftover_size is smaller than the previously smallest leftover_size
+          // then no longer consider the previous hole
+        if(leftover_size < previously_smallest_leftover_size)
+        {
+          smallest_hole = i;
+          previously_smallest_leftover_size = leftover_size;
+        }
+        // find the smallest hole in the list
+        // then run the list again to enter the hole
+      }
+    }
+
+    // if the node type is hole and in_use and size < node size
+    for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        // find the smallest hole in the list
+        // then run the list again to enter the hole
+        if(smallest_hole == i)
+        {
+          insertNode( size );
+          //    then return that node arena pointer
+          LinkedList[i].type = P;
+          return LinkedList[i].arena;
+        }
+      //
+
+      }
+    }
   }
+
   else if( gAlgorithm == WORST_FIT )
   {
-    
+    // allocate the smallest hole that is big enough
+    // start at the beginning of th list
+    int i = 0;
+
+    // marker to find the largest hole
+    int largest_hole = 0;
+
+    // tracker of previously largest hole
+    int previously_largest_leftover_size = 0;
+
+    // if the node type is hole and in_use and size < node size
+    for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        //calculate if the hole is big enough
+        int leftover_size = LinkedList[i].size - size;
+        // compare the size of the hole to the previous hole
+        // if the leftover_size is larger than the previously largest leftover_size
+          // then no longer consider the previous hole
+        if(leftover_size > previously_largest_leftover_size)
+        {
+          largest_hole = i;
+          previously_largest_leftover_size = leftover_size;
+        }
+        // find the largest hole in the list
+        // then run the list again to enter the hole
+      }
+    }
+
+    // if the node type is hole and in_use and size < node size
+    for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+    {
+      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      {
+        // find the largest hole in the list
+        // then run the list again to enter the hole
+        if(largest_hole == i)
+        {
+          insertNode( size );
+          //    then return that node arena pointer
+          LinkedList[i].type = P;
+          return LinkedList[i].arena;
+        }
+      //
+
+      }
+    }
   }
   
 
