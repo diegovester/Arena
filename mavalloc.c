@@ -421,6 +421,7 @@ void printList()
 }
 
 
+
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
   printf("\n----mavalloc_init----\n");
@@ -476,7 +477,6 @@ int previously_allocated_hole = 0;
 int leftover_size = 0;
 void * mavalloc_alloc( size_t size )
 {
-  printList();
   // allocate size
   void * ptr = NULL;
   
@@ -606,9 +606,10 @@ void * mavalloc_alloc( size_t size )
           //    then return that node arena pointer
           LinkedList[i].type = P;
           LinkedList[i].arena = arena;
-          
-          printf("LinkedList[%d].arena = %p", i, LinkedList[i].arena);
 
+          LinkedList[i+1].in_use = 1;
+          LinkedList[i+1].size = leftover_size;
+          LinkedList[i+1].type = H;
           return LinkedList[i].arena;
         }
       }
@@ -678,6 +679,7 @@ void * mavalloc_alloc( size_t size )
 
 void mavalloc_free( void * ptr )
 {
+  
   // search for the node containing the value given by ptr
   // set that node to be a type H
   int i;
@@ -685,22 +687,29 @@ void mavalloc_free( void * ptr )
   {
     if( ptr == LinkedList[i].arena )
     {
+      printf("\nLinkedList[%d].type = H", i);
       LinkedList[i].type = H;
-      return;
+      //return;
     }
   }
   // check if adjacent nodes are free
   // if they are, then combine them
   for( i = 0; i < MAX_LINKED_LIST_SIZE-1; i ++)
   {
-    if( LinkedList[i].type == H && LinkedList[i+1].type == H )
+    if( ptr == LinkedList[i].arena )
     {
-      // combine the sizes into LinkedList[i]
-      // remove LinkedList[i+1]
-
+      if( LinkedList[i].type == H && LinkedList[i+1].type == H )
+      {
+        // combine the sizes into LinkedList[i]
+        // remove LinkedList[i+1]
+        //printf("\nremoveNode(LinkedList[%d+1].size", i);
+        
+        LinkedList[i].size = LinkedList[i].size + LinkedList[i+1].size;
+        removeNode(LinkedList[i+1].size);
+      }
     }
-      
   }
+  
   
   return;
 }
