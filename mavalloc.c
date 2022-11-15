@@ -470,7 +470,7 @@ int spitSum()
 int global_size = 0;
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
-  //printf("\n----mavalloc_init----\n");
+
   // initialize the linked list
   int i = 0;
   for( i = 0; i < MAX_LINKED_LIST_SIZE; i++)
@@ -494,6 +494,14 @@ int mavalloc_init( size_t size, enum ALGORITHM algorithm )
   global_size = ALIGN4(size);
   LinkedList[0].type = H;
   LinkedList[0].arena = gArena;
+
+  /*
+  printf("\n--After Initialization--");
+  printf("\nLinkedList[%d].size = %d", 0, LinkedList[0].size);
+  printf("\nLinkedList[%d].type = %d", 0, LinkedList[0].type);
+  printf("\nLinkedList[%d].arena = %p", 0, LinkedList[0].arena);
+  printf("\nLinkedList[%d].in_use = %d", 0, LinkedList[0].in_use);
+  */
 
   
 
@@ -526,6 +534,7 @@ void * mavalloc_alloc( size_t size )
 {
   // allocate size
   void * ptr = NULL;
+  size_t new_size = ALIGN4(size);
   
   if( gAlgorithm == FIRST_FIT )
   {
@@ -538,42 +547,49 @@ void * mavalloc_alloc( size_t size )
     // if the node type is hole and in_use and size < node size
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
-        leftover_size = LinkedList[i].size - size;
+        leftover_size = LinkedList[i].size - new_size;
 
         // Calculate the new arena pointer
-        void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
+        void * arena = (void*)((long int)LinkedList[i].arena + (long int)new_size);
       //    if there is leftover size then insert a new node as
       //      a hole that holds that leftover space
       //      insertNode( leftover_size, arena );
         if(leftover_size > 0)
         {
           
-          insertNode( size );
-          //    then return that node arena pointer
-          LinkedList[i].type = P;
+          insertNode( leftover_size );
+          LinkedList[i].type = H;
           LinkedList[i].arena = arena;
-          int ArenaFill = spitSum();
-          if( ArenaFill != global_size)
-          {
-            LinkedList[i+1].in_use = 1;
-            LinkedList[i+1].size = leftover_size;
-            LinkedList[i+1].type = H;
-            
-          }
-          else
-          {
-            removeNode(0);
-          }
+          /*
+          printf("\n--After hole insertion--");
+          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
+          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
+          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
+          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
+          */
 
           
+          insertNode(new_size);
+          LinkedList[i].type = P;
+          LinkedList[i].arena = arena-(long int)new_size;
+          LinkedList[i+1].arena = arena;
 
+          /*
+          printf("\n\n--After block insertion--");
+          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
+          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
+          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
+          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
 
+          printf("\n\nLinkedList[%d].size = %d", i+1, LinkedList[i+1].size);
+          printf("\nLinkedList[%d].type = %d", i+1, LinkedList[i+1].type);
+          printf("\nLinkedList[%d].arena = %p", i+1, LinkedList[i+1].arena);
+          printf("\nLinkedList[%d].in_use = %d", i+1, LinkedList[i+1].in_use);
+          */
           return LinkedList[i].arena;
         }
-      //
-      
       }
     }
   }
@@ -589,40 +605,49 @@ void * mavalloc_alloc( size_t size )
     // if the node type is hole and in_use and size < node size
     for( int i = previously_allocated_hole; i < MAX_LINKED_LIST_SIZE; i++ )
     {
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
-        leftover_size = LinkedList[i].size - size;
+        leftover_size = LinkedList[i].size - new_size;
 
         // Calculate the new arena pointer
-        void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
+        void * arena = (void*)((long int)LinkedList[i].arena + (long int)new_size);
       //    if there is leftover size then insert a new node as
       //      a hole that holds that leftover space
       //      insertNode( leftover_size, arena );
         if(leftover_size > 0)
         {
-          previously_allocated_hole = i;
-          insertNode( size );
-          //    then return that node arena pointer
-          LinkedList[i].type = P;
+          
+          insertNode( leftover_size );
+          LinkedList[i].type = H;
           LinkedList[i].arena = arena;
+          /*
+          printf("\n--After hole insertion--");
+          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
+          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
+          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
+          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
+          */
 
-          int ArenaFill = spitSum();
-          if( ArenaFill != global_size)
-          {
-            LinkedList[i+1].in_use = 1;
-            LinkedList[i+1].size = leftover_size;
-            LinkedList[i+1].type = H;
-            
-          }
-          else
-          {
-            removeNode(0);
-          }
+          
+          insertNode(new_size);
+          LinkedList[i].type = P;
+          LinkedList[i].arena = arena-(long int)new_size;
+          LinkedList[i+1].arena = arena;
 
+          /*
+          printf("\n\n--After block insertion--");
+          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
+          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
+          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
+          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
+
+          printf("\n\nLinkedList[%d].size = %d", i+1, LinkedList[i+1].size);
+          printf("\nLinkedList[%d].type = %d", i+1, LinkedList[i+1].type);
+          printf("\nLinkedList[%d].arena = %p", i+1, LinkedList[i+1].arena);
+          printf("\nLinkedList[%d].in_use = %d", i+1, LinkedList[i+1].in_use);
+          */
           return LinkedList[i].arena;
         }
-      //
-      
       }
     }
   }
@@ -644,11 +669,12 @@ void * mavalloc_alloc( size_t size )
     {
       
       //printf("\nif( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )");
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
-        
+        //printf("LinkedList[i].size = %d")
         //calculate if the hole is big enough
-        leftover_size = LinkedList[i].size - size;
+        leftover_size = LinkedList[i].size - new_size;
+        //printf("\nleftover_size = %d", leftover_size);
         //printf("leftover_size = %d\n", leftover_size);
         // compare the size of the hole to the previous hole
         // if the leftover_size is smaller than the previously smallest leftover_size
@@ -671,35 +697,27 @@ void * mavalloc_alloc( size_t size )
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
       //printf("\nif( LinkedList[i].type == H && LinkedList[i].in_use && size < LinkedList[i].size )");
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
         // Calculate the new arena pointer
-        void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
+        void * arena = (void*)((long int)LinkedList[i].arena + (long int)new_size);
         // find the smallest hole in the list
         // then run the list again to enter the hole
         if(smallest_hole == i)
         {
-          insertNode( size );
-          //    then return that node arena pointer
-          LinkedList[i].type = P;
-          LinkedList[i].arena = arena;
+          if(leftover_size > 0 )
+          {
+            
+            insertNode( leftover_size );
+            LinkedList[i].type = H;
+            LinkedList[i].arena = arena;
+          }
 
           
-          int ArenaFill = spitSum();
-          if( ArenaFill != global_size)
-          {
-            LinkedList[i+1].in_use = 1;
-            LinkedList[i+1].size = leftover_size;
-            LinkedList[i+1].type = H;
-            
-          }
-          else
-          {
-            removeNode(0);
-          }
-          
-          
-          
+          insertNode(new_size);
+          LinkedList[i].type = P;
+          LinkedList[i].arena = arena-(long int)new_size;
+          LinkedList[i+1].arena = arena;
           return LinkedList[i].arena;
         }
       }
@@ -708,7 +726,7 @@ void * mavalloc_alloc( size_t size )
 
   else if( gAlgorithm == WORST_FIT )
   {
-    printf("\nWORST_FIT\n");
+    
     // allocate the smallest hole that is big enough
     // start at the beginning of th list
     int i = 0;
@@ -722,13 +740,13 @@ void * mavalloc_alloc( size_t size )
     // if the node type is hole and in_use and size < node size
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
         //calculate if the hole is big enough
-        leftover_size = LinkedList[i].size - size;
+        leftover_size = LinkedList[i].size - new_size;
 
         // Calculate the new arena pointer
-        void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
+        //void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
         // compare the size of the hole to the previous hole
         // if the leftover_size is larger than the previously largest leftover_size
           // then no longer consider the previous hole
@@ -751,34 +769,31 @@ void * mavalloc_alloc( size_t size )
     // if the node type is hole and in_use and size < node size
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
     {
-      if( LinkedList[i].type == H && LinkedList[i].in_use && size <= LinkedList[i].size )
+      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
         // Calculate the new arena pointer
-        void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
+        void * arena = (void*)((long int)LinkedList[i].arena + (long int)new_size);
         // find the largest hole in the list
         // then run the list again to enter the hole
         if(largest_hole == i)
         {
-          insertNode( size );
-          //    then return that node arena pointer
-          LinkedList[i].type = P;
-          LinkedList[i].arena = arena;
-          int ArenaFill = spitSum();
-          if( ArenaFill != global_size)
+          if(leftover_size > 0 )
           {
-            LinkedList[i+1].in_use = 1;
-            LinkedList[i+1].size = leftover_size;
-            LinkedList[i+1].type = H;
+            
+            insertNode( leftover_size );
+            LinkedList[i].type = H;
+            LinkedList[i].arena = arena;
             
           }
-          else
-          {
-            removeNode(0);
-          }
+
+          
+          insertNode(new_size);
+          LinkedList[i].type = P;
+          LinkedList[i].arena = arena-(long int)new_size;
+          LinkedList[i+1].arena = arena;
+
           return LinkedList[i].arena;
         }
-      //
-
       }
     }
   }
@@ -790,6 +805,7 @@ void * mavalloc_alloc( size_t size )
 
 void mavalloc_free( void * ptr )
 {
+  // maybe ALIGN4 the ptr size???
   
   // search for the node containing the value given by ptr
   // set that node to be a type H
