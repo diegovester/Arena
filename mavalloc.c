@@ -470,6 +470,8 @@ int spitSum()
 int global_size = 0;
 int mavalloc_init( size_t size, enum ALGORITHM algorithm )
 {
+  // set the algorithm type // initialize the allocation arena
+
 
   // initialize the linked list
   int i = 0;
@@ -480,6 +482,13 @@ int mavalloc_init( size_t size, enum ALGORITHM algorithm )
     LinkedList[i].arena = 0;
     LinkedList[i].type = H;
   }
+  // size must be 4-byte aligned
+    // Use the macro ALIGN4 to perform this alignment
+    // take the size and call malloc
+        // allocate a memory arena 
+            //preallocate the memory for your ledger
+            // assume a maximum of 10,000 allocations
+        // this is the only malloc() your code will call
   // allocate the pool
   gArena = malloc( ALIGN4( size ) );
   //printf("\ngArena = %p", gArena);
@@ -503,14 +512,19 @@ int mavalloc_init( size_t size, enum ALGORITHM algorithm )
   printf("\nLinkedList[%d].in_use = %d", 0, LinkedList[0].in_use);
   */
 
+ // if the allocation fails
+        // return -1
   
-
+// if the allocations succeed
+        //  return 0
   
   return 0;
 }
 
 void mavalloc_destroy( )
 {
+  // Destory the arena
+    // This function releases the arena
   int i = 0;
   for( i = 0; i < MAX_LINKED_LIST_SIZE; i++)
   {
@@ -524,6 +538,19 @@ void mavalloc_destroy( )
   return;
 }
 
+/*
+          printf("\n\n--After block insertion--");
+          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
+          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
+          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
+          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
+
+          printf("\n\nLinkedList[%d].size = %d", i+1, LinkedList[i+1].size);
+          printf("\nLinkedList[%d].type = %d", i+1, LinkedList[i+1].type);
+          printf("\nLinkedList[%d].arena = %p", i+1, LinkedList[i+1].arena);
+          printf("\nLinkedList[%d].in_use = %d", i+1, LinkedList[i+1].in_use);
+          */
+
 // initialize global variable for NEXT_FIT
 // will remember where the last search ended off on
 int previously_allocated_hole = 0;
@@ -532,10 +559,16 @@ int previously_allocated_hole = 0;
 int leftover_size = 0;
 void * mavalloc_alloc( size_t size )
 {
+  //Allocate memory from the arena
+
+    // Size specifies the number of bytes to allocate
+        // must use the ALIGN4 macro
   // allocate size
   void * ptr = NULL;
   size_t new_size = ALIGN4(size);
   
+  // If there is an available block of memory
+        // return a pointer to the available memory
   if( gAlgorithm == FIRST_FIT )
   {
     //printf("\nFIRST_FIT\n");
@@ -562,32 +595,10 @@ void * mavalloc_alloc( size_t size )
           insertNode( leftover_size );
           LinkedList[i].type = H;
           LinkedList[i].arena = arena;
-          /*
-          printf("\n--After hole insertion--");
-          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
-          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
-          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
-          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
-          */
 
-          
-          insertNode(new_size);
-          LinkedList[i].type = P;
-          LinkedList[i].arena = arena-(long int)new_size;
-          LinkedList[i+1].arena = arena;
-
-          /*
-          printf("\n\n--After block insertion--");
-          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
-          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
-          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
-          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
-
-          printf("\n\nLinkedList[%d].size = %d", i+1, LinkedList[i+1].size);
-          printf("\nLinkedList[%d].type = %d", i+1, LinkedList[i+1].type);
-          printf("\nLinkedList[%d].arena = %p", i+1, LinkedList[i+1].arena);
-          printf("\nLinkedList[%d].in_use = %d", i+1, LinkedList[i+1].in_use);
-          */
+          LinkedList[i+1].size = new_size;
+          LinkedList[i+1].type = P;
+          LinkedList[i+1].arena = arena-(long int)new_size;
           return LinkedList[i].arena;
         }
       }
@@ -595,16 +606,21 @@ void * mavalloc_alloc( size_t size )
   }
   // start search from last allocated hole
     // resume from the point of the list that the last search ended on
+  
   else if( gAlgorithm == NEXT_FIT )
   {
+    
     //printf("\nNEXT_FIT\n");
     // Allocate the first hole that is big enough
     // start at the beginning of the list
     //previously_allocated_hole
       // initialized globally above mavalloc_alloc()
     // if the node type is hole and in_use and size < node size
-    for( int i = previously_allocated_hole; i < MAX_LINKED_LIST_SIZE; i++ )
+    int run = 1;
+    int i = previously_allocated_hole;
+    while( run == 1)
     {
+      
       if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
       {
         leftover_size = LinkedList[i].size - new_size;
@@ -620,34 +636,22 @@ void * mavalloc_alloc( size_t size )
           insertNode( leftover_size );
           LinkedList[i].type = H;
           LinkedList[i].arena = arena;
-          /*
-          printf("\n--After hole insertion--");
-          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
-          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
-          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
-          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
-          */
 
+          LinkedList[i+1].size = new_size;
+          LinkedList[i+1].type = P;
+          LinkedList[i+1].arena = arena-(long int)new_size;
           
-          insertNode(new_size);
-          LinkedList[i].type = P;
-          LinkedList[i].arena = arena-(long int)new_size;
-          LinkedList[i+1].arena = arena;
-
-          /*
-          printf("\n\n--After block insertion--");
-          printf("\nLinkedList[%d].size = %d", i, LinkedList[i].size);
-          printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
-          printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
-          printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
-
-          printf("\n\nLinkedList[%d].size = %d", i+1, LinkedList[i+1].size);
-          printf("\nLinkedList[%d].type = %d", i+1, LinkedList[i+1].type);
-          printf("\nLinkedList[%d].arena = %p", i+1, LinkedList[i+1].arena);
-          printf("\nLinkedList[%d].in_use = %d", i+1, LinkedList[i+1].in_use);
-          */
           return LinkedList[i].arena;
         }
+      }
+      i++;
+      if( i == MAX_LINKED_LIST_SIZE)
+      {
+        i = 0;
+      }
+      if( i == previously_allocated_hole)
+      {
+        run = 0;
       }
     }
   }
@@ -714,10 +718,9 @@ void * mavalloc_alloc( size_t size )
           }
 
           
-          insertNode(new_size);
-          LinkedList[i].type = P;
-          LinkedList[i].arena = arena-(long int)new_size;
-          LinkedList[i+1].arena = arena;
+          LinkedList[i+1].size = new_size;
+          LinkedList[i+1].type = P;
+          LinkedList[i+1].arena = arena-(long int)new_size;
           return LinkedList[i].arena;
         }
       }
@@ -783,14 +786,12 @@ void * mavalloc_alloc( size_t size )
             insertNode( leftover_size );
             LinkedList[i].type = H;
             LinkedList[i].arena = arena;
+
+            LinkedList[i+1].size = new_size;
+            LinkedList[i+1].type = P;
+            LinkedList[i+1].arena = arena-(long int)new_size;
             
           }
-
-          
-          insertNode(new_size);
-          LinkedList[i].type = P;
-          LinkedList[i].arena = arena-(long int)new_size;
-          LinkedList[i+1].arena = arena;
 
           return LinkedList[i].arena;
         }
@@ -798,13 +799,22 @@ void * mavalloc_alloc( size_t size )
     }
   }
   
-
+  // If there is no available block of memory
+        // return NULL
   // only return NULL on failure
   return NULL;
 }
 
 void mavalloc_free( void * ptr )
 {
+  // free the pointer passed in
+        // the pointer is of the heap memory
+    
+    // free the memory block pointed to by the pointer
+    // if the block is adjacent to another block then combine them (coalesce)
+
+    // return none
+
   // maybe ALIGN4 the ptr size???
   
   // search for the node containing the value given by ptr
@@ -843,6 +853,11 @@ void mavalloc_free( void * ptr )
 
 int mavalloc_size( )
 {
+  // allocator size
+
+    // return the number of nodes in the allocators linked list
+
+    //return the size of the allactor linked list
   
   int number_of_nodes = 0;
   //count number of nodes?
