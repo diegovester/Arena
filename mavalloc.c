@@ -711,7 +711,7 @@ void * mavalloc_alloc( size_t size )
       }
       else
       {
-        insertNode( new_size );
+        LinkedList[smallest_hole].size = new_size;
         LinkedList[smallest_hole].type = P;
         LinkedList[smallest_hole].arena = arena;
       }
@@ -774,7 +774,7 @@ void * mavalloc_alloc( size_t size )
       }
       else
       {
-        insertNode( new_size );
+        LinkedList[largest_hole].size = new_size;
         LinkedList[largest_hole].type = P;
         LinkedList[largest_hole].arena = arena;
       }
