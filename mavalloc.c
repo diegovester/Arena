@@ -735,10 +735,14 @@ void * mavalloc_alloc( size_t size )
     int i = 0;
 
     // marker to find the largest hole
-    int largest_hole = 0;
+    int largest_hole = -1;
 
     // tracker of previously largest hole
-    int previously_largest_leftover_size = 0;
+    //INT_MIN?
+    int previously_largest_leftover_size = -1000;
+
+    // Calculate the new arena pointer
+    void * arena = (void*)((long int)LinkedList[i].arena);
 
     // if the node type is hole and in_use and size < node size
     for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
@@ -748,8 +752,7 @@ void * mavalloc_alloc( size_t size )
         //calculate if the hole is big enough
         leftover_size = LinkedList[i].size - new_size;
 
-        // Calculate the new arena pointer
-        //void * arena = (void*)((long int)LinkedList[i].arena + (long int)size);
+        
         // compare the size of the hole to the previous hole
         // if the leftover_size is larger than the previously largest leftover_size
           // then no longer consider the previous hole
@@ -769,36 +772,31 @@ void * mavalloc_alloc( size_t size )
       }
     }
 
-    // if the node type is hole and in_use and size < node size
-    for( i = 0; i < MAX_LINKED_LIST_SIZE; i++ )
+    // if largest_hole != -1
+    // then split if leftoversize > 0
+    // set linkedlist[winner].type - p
+    // return linked list[i].arena
+    if(largest_hole != -1)
     {
-      if( LinkedList[i].type == H && LinkedList[i].in_use && new_size <= LinkedList[i].size )
+      if(leftover_size > 0)
       {
-        // Calculate the new arena pointer
-        void * arena = (void*)((long int)LinkedList[i].arena + (long int)new_size);
-        // find the largest hole in the list
-        // then run the list again to enter the hole
-        if(largest_hole == i)
-        {
-          if(leftover_size > 0 )
-          {
-            
-            insertNode( leftover_size );
-            LinkedList[i].type = H;
-            LinkedList[i].arena = arena;
+        insertNode( new_size );
+        LinkedList[largest_hole].type = P;
+        LinkedList[largest_hole].arena = arena;
 
-            LinkedList[i+1].size = new_size;
-            LinkedList[i+1].type = P;
-            LinkedList[i+1].arena = arena-(long int)new_size;
-            
-          }
-
-          return LinkedList[i].arena;
-        }
+        LinkedList[largest_hole+1].size = leftover_size;
+        LinkedList[largest_hole+1].type = H;
+        LinkedList[largest_hole+1].arena = arena+(long int)new_size;
       }
+      else
+      {
+        insertNode( new_size );
+        LinkedList[largest_hole].type = P;
+        LinkedList[largest_hole].arena = arena;
+      }
+      return LinkedList[largest_hole].arena;
     }
   }
-  
   // If there is no available block of memory
         // return NULL
   // only return NULL on failure
