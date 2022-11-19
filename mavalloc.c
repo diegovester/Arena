@@ -845,8 +845,6 @@ void mavalloc_free( void * ptr )
         //printf("\nremoveNode(LinkedList[%d+1].size", i);
         
         LinkedList[i].size = LinkedList[i].size + LinkedList[i+1].size;
-        printf("\nremoving node:");
-        printf("\nLinkedList[%d].size = %d\n", i+1, LinkedList[i+1].size);
         removeNode(LinkedList[i+1].size);
       }
     }
