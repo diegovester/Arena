@@ -552,7 +552,6 @@ void mavalloc_destroy( )
           printf("\nLinkedList[%d].type = %d", i, LinkedList[i].type);
           printf("\nLinkedList[%d].arena = %p", i, LinkedList[i].arena);
           printf("\nLinkedList[%d].in_use = %d", i, LinkedList[i].in_use);
-
           printf("\n\nLinkedList[%d].size = %d", i+1, LinkedList[i+1].size);
           printf("\nLinkedList[%d].type = %d", i+1, LinkedList[i+1].type);
           printf("\nLinkedList[%d].arena = %p", i+1, LinkedList[i+1].arena);
@@ -651,8 +650,8 @@ void * mavalloc_alloc( size_t size )
           LinkedList[i].type = P;
           LinkedList[i].arena = arena;
 
-          insertNode( leftover_size);
-          //LinkedList[i+1].size = leftover_size;
+          //insertNode( leftover_size);
+          LinkedList[i+1].size = leftover_size;
           LinkedList[i+1].type = H;
           LinkedList[i+1].arena = arena+(long int)new_size;
         }
